@@ -5,6 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <meta name="theme-color" content="#1e1e2c">
+
     <title>{{ $title ?? 'El3bha | Game Rental Platform' }}</title>
 
     <!-- Stylesheets -->
@@ -123,6 +131,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 15px;
         }
 
         #rent-now-button,
@@ -183,26 +192,38 @@
             opacity: 1;
         }
 
+        /* تعديل: إزالة الخلفية السوداء من وراء النص في البانر */
         .banner-content {
             max-width: 800px;
             padding: 20px;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: transparent;
+            /* تم تغييرها من rgba(0, 0, 0, 0.5) */
             border-radius: 10px;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: none;
+            /* تم تغييرها من blur(5px) */
+            -webkit-backdrop-filter: none;
+            /* تم تغييرها من blur(5px) */
         }
 
         .banner-title {
             font-size: 3rem;
             font-weight: 700;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9),
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000;
         }
 
         .banner-description {
             font-size: 1.2rem;
             margin-bottom: 20px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9),
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000;
         }
 
         .banner-carousel-indicators {
@@ -302,9 +323,10 @@
             <div class="footer-container">
                 <div class="footer-about">
                     <a href="{{ route('home') }}" class="footer-logo">
-                        <img src="" alt="">
+                        <img src="https://c.top4top.io/p_3626qoy0p1.png" alt="El3bha Logo">
                     </a>
-                    <p class="footer-description"></p>
+                    <p class="footer-description">El3bha is your premier destination for game rentals. Enjoy the latest
+                        titles without the commitment of a purchase.</p>
 
                     <div class="footer-social">
                         <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
@@ -338,16 +360,6 @@
                             <li><a href="#">Sports</a></li>
                             <li><a href="#">Horror</a></li>
                         @endif
-                    </ul>
-                </div>
-
-                <div class="footer-links">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="#">FAQ</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Help Center</a></li>
                     </ul>
                 </div>
             </div>
@@ -403,7 +415,7 @@
                         <button id="add-to-cart-button" class="btn btn-outline" onclick="addToCart()">
                             <i class="fas fa-cart-plus"></i> Add to Cart
                         </button>
-                        <button id="rent-now-button" class="btn btn-primary">
+                        <button id="rent-now-button" class="btn btn-primary" onclick="rentNow()">
                             <i class="fas fa-gamepad"></i> Rent Now
                         </button>
                     </div>
@@ -417,7 +429,7 @@
 
     <script>
         function addToCart() {
-            const gameId = document.getElementById('rent-now-button').getAttribute('data-game-id');
+            const gameId = document.getElementById('add-to-cart-button').getAttribute('data-game-id');
 
             fetch('{{ route("cart.add") }}', {
                 method: 'POST',
@@ -451,6 +463,51 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
+                });
+        }
+
+        // وظيفة جديدة لزر "Rent Now"
+        function rentNow() {
+            const gameId = document.getElementById('rent-now-button').getAttribute('data-game-id');
+
+            // أولاً: إضافة اللعبة إلى السلة
+            fetch('{{ route("cart.add") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    game_id: gameId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // إذا نجحت العملية، قم بتحديث عداد السلة
+                        const cartCounter = document.getElementById('cart-counter');
+                        if (cartCounter) {
+                            cartCounter.textContent = data.count;
+                        }
+
+                        // أغلق النافذة المنبثقة
+                        closeGameModal();
+
+                        // إذا كان المستخدم غير مسجل دخول، انتقل إلى صفحة تسجيل الدخول
+                        if (data.redirect) {
+                            window.location.href = data.redirect;
+                        } else {
+                            // إذا كان المستخدم مسجل دخول، انتقل إلى صفحة السلة
+                            window.location.href = '{{ route("cart.index") }}';
+                        }
+                    } else {
+                        // إذا فشلت العملية، أظهر رسالة خطأ
+                        alert('Could not add game to cart. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
                 });
         }
 
@@ -504,22 +561,29 @@
             // Store game ID for rental processing
             document.getElementById('rent-now-button').setAttribute('data-game-id', id);
             document.getElementById('rent-now-button').setAttribute('data-game-price', price);
+            document.getElementById('add-to-cart-button').setAttribute('data-game-id', id);
+            document.getElementById('add-to-cart-button').setAttribute('data-game-price', price);
         };
 
-        // Handle rental button click
-        document.getElementById('rent-now-button').addEventListener('click', function () {
-            const gameId = this.getAttribute('data-game-id');
-            const gamePrice = this.getAttribute('data-game-price');
-            const duration = document.querySelector('input[name="rental-duration"]:checked').value;
-            const durationText = document.querySelector('input[name="rental-duration"]:checked').closest('.duration-option').querySelector('.option-title').textContent;
-            const price = document.querySelector('input[name="rental-duration"]:checked').closest('.duration-option').querySelector('.option-price').textContent;
+        // إضافة معالج لزر الإغلاق (X) للتأكد من عمله بشكل صحيح
+        document.addEventListener('DOMContentLoaded', function () {
+            // إضافة معالج الحدث لزر X
+            const closeButton = document.querySelector('.close-modal');
+            if (closeButton) {
+                closeButton.addEventListener('click', function () {
+                    closeGameModal();
+                });
+            }
 
-            // Here you would typically send this data to the server
-            // For now, just show an alert
-            alert(`Game rental request submitted!\n\nGame ID: ${gameId}\nDuration: ${durationText}\nPrice: ${price}`);
-
-            // Close modal after submission
-            closeGameModal();
+            // إضافة معالج للنقر خارج المحتوى لإغلاق النافذة
+            const modal = document.getElementById('game-modal');
+            if (modal) {
+                modal.addEventListener('click', function (e) {
+                    if (e.target === this) {
+                        closeGameModal();
+                    }
+                });
+            }
         });
     </script>
 

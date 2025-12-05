@@ -4,7 +4,8 @@
     <!-- Banner Carousel - Now only on the home page -->
     <div class="banner-carousel">
         <!-- Slide 1 -->
-        <div class="banner-slide active" style="background-image: url('https://e.top4top.io/p_36269u1m31.png');">
+        <div id="banner-slide-1" class="banner-slide active"
+            style="background-image: url('https://e.top4top.io/p_36269u1m31.png');">
             <div class="banner-content">
                 <h2 class="banner-title">Epic Gaming Adventures</h2>
                 <p class="banner-description">Discover new worlds and exciting challenges</p>
@@ -12,17 +13,19 @@
             </div>
         </div>
 
-        <!-- Slide 2 -->
-        <div class="banner-slide" style="background-image: url('https://f.top4top.io/p_3626g7d051.png');">
+        <!-- Slide 2 - تم حذف زر Rent Now -->
+        <div id="banner-slide-2" class="banner-slide"
+            style="background-image: url('https://f.top4top.io/p_3626g7d051.png');">
             <div class="banner-content">
                 <h2 class="banner-title">Premium Game Rentals</h2>
                 <p class="banner-description">Play more for less with our affordable rental plans</p>
-                <a href="{{ route('games.index') }}" class="btn btn-primary">Rent Now</a>
+                <!-- الزر تم حذفه من هنا -->
             </div>
         </div>
 
         <!-- Slide 3 -->
-        <div class="banner-slide" style="background-image: url('https://g.top4top.io/p_3626gduyy1.png');">
+        <div id="banner-slide-3" class="banner-slide"
+            style="background-image: url('https://g.top4top.io/p_3626gduyy1.png');">
             <div class="banner-content">
                 <h2 class="banner-title">Game On, Save Big</h2>
                 <p class="banner-description">Unlimited gaming without breaking the bank</p>
@@ -103,6 +106,31 @@
 
 @section('styles')
     <style>
+        /* إزالة الخلفية السوداء من وراء النص في البانر */
+        .banner-content {
+            background-color: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important;
+            padding: 20px !important;
+        }
+
+        /* تعزيز وضوح النص بدون خلفية */
+        .banner-title,
+        .banner-description {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9),
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000 !important;
+        }
+
+        /* إخفاء زر Rent Now في الشريحة الثانية */
+        #banner-slide-2 .btn {
+            display: none !important;
+        }
+
+        /* تنسيقات أخرى */
         .categories-filter-container {
             margin-bottom: 30px;
             display: flex;
@@ -145,6 +173,27 @@
         const slides = document.querySelectorAll('.banner-slide');
         const indicators = document.querySelectorAll('.carousel-indicator');
         const totalSlides = slides.length;
+
+        // إضافة كود JavaScript لإزالة أي خلفية تحت النص عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function () {
+            // تأكد من إزالة أي عناصر أو خلفيات إضافية
+            document.querySelectorAll('.banner-content, .banner-title, .banner-description').forEach(elem => {
+                elem.style.background = 'none';
+                elem.style.backgroundColor = 'transparent';
+                elem.style.backdropFilter = 'none';
+                elem.style.webkitBackdropFilter = 'none';
+                elem.style.boxShadow = 'none';
+            });
+
+            // تأكد من عدم وجود زر في الشريحة الثانية
+            const secondSlide = document.getElementById('banner-slide-2');
+            if (secondSlide) {
+                const buttons = secondSlide.querySelectorAll('.btn');
+                buttons.forEach(button => {
+                    button.remove();
+                });
+            }
+        });
 
         // Function to show specific slide
         function setSlide(slideIndex) {
@@ -197,94 +246,37 @@
                 });
             });
 
-            // إظهار جميع ألعاب التصنيف عند النقر على "See All"
-            window.showAllGames = function (categoryId) {
-                // إزالة الكلاس "active" من جميع الأزرار
-                categoryButtons.forEach(btn => btn.classList.remove('active'));
+            // كود دوارات الألعاب
+            const carousels = document.querySelectorAll('.carousel-container');
+            carousels.forEach(carousel => {
+                const wrapper = carousel.querySelector('.carousel-wrapper');
+                const prevButton = carousel.querySelector('.carousel-button.prev');
+                const nextButton = carousel.querySelector('.carousel-button.next');
 
-                // إضافة الكلاس "active" للزر المناسب
-                document.querySelector(`.btn-category[data-category="${categoryId}"]`).classList.add('active');
+                let scrollAmount = 0;
+                const cardWidth = 280; // عرض بطاقة اللعبة + الهامش
 
-                // إخفاء جميع التصنيفات
-                categoryContents.forEach(content => {
-                    content.style.display = 'none';
+                nextButton.addEventListener('click', function () {
+                    scrollAmount += cardWidth;
+                    if (scrollAmount > wrapper.scrollWidth - wrapper.clientWidth) {
+                        scrollAmount = wrapper.scrollWidth - wrapper.clientWidth;
+                    }
+                    wrapper.scrollTo({
+                        left: scrollAmount,
+                        behavior: 'smooth'
+                    });
                 });
 
-                // إظهار التصنيف المحدد فقط
-                document.querySelector(`.category-content[data-category-id="${categoryId}"]`).style.display = 'block';
-
-                // التمرير إلى هذا التصنيف
-                document.querySelector(`.category-content[data-category-id="${categoryId}"]`).scrollIntoView({
-                    behavior: 'smooth'
+                prevButton.addEventListener('click', function () {
+                    scrollAmount -= cardWidth;
+                    if (scrollAmount < 0) {
+                        scrollAmount = 0;
+                    }
+                    wrapper.scrollTo({
+                        left: scrollAmount,
+                        behavior: 'smooth'
+                    });
                 });
-            };
-
-            // Modal functionality
-            window.showGameModal = function (id, name, description, category, platform, image, price) {
-                // Set modal content
-                document.getElementById('modal-game-title').textContent = name;
-                document.getElementById('modal-game-category').textContent = category;
-                document.getElementById('modal-game-platform').textContent = platform;
-                document.getElementById('modal-game-description').textContent = description || 'No description available for this game.';
-                document.querySelector('.game-modal-image').style.backgroundImage = `url('${image}')`;
-
-                // Set prices based on the game's price_per_day
-                document.getElementById('day-price').textContent = price + ' SAR';
-                document.getElementById('week-price').textContent = (price * 5) + ' SAR'; // 5 days for a week (discount)
-                document.getElementById('month-price').textContent = (price * 18) + ' SAR'; // 18 days for a month (discount)
-
-                // Show modal
-                const modal = document.getElementById('game-modal');
-                modal.style.display = 'flex';
-                setTimeout(() => {
-                    modal.classList.add('show');
-                }, 10);
-                document.body.style.overflow = 'hidden'; // Prevent background scrolling
-
-                // Store game ID for rental processing
-                document.getElementById('rent-now-button').setAttribute('data-game-id', id);
-                document.getElementById('rent-now-button').setAttribute('data-game-price', price);
-            };
-
-            // Close modal when clicking the X button
-            document.querySelector('.close-modal').addEventListener('click', function () {
-                closeGameModal();
-            });
-
-            // Close modal when clicking outside the modal content
-            document.getElementById('game-modal').addEventListener('click', function (event) {
-                if (event.target === this) {
-                    closeGameModal();
-                }
-            });
-
-            // Close modal function
-            function closeGameModal() {
-                const modal = document.getElementById('game-modal');
-                modal.classList.remove('show');
-                setTimeout(() => {
-                    modal.style.display = 'none';
-                }, 300);
-                document.body.style.overflow = ''; // Restore scrolling
-            }
-
-            // Make closeGameModal available to window scope
-            window.closeGameModal = closeGameModal;
-
-            // Handle rental button click
-            document.getElementById('rent-now-button').addEventListener('click', function () {
-                const gameId = this.getAttribute('data-game-id');
-                const gamePrice = this.getAttribute('data-game-price');
-                const duration = document.querySelector('input[name="rental-duration"]:checked').value;
-                const durationText = document.querySelector('input[name="rental-duration"]:checked').closest('.duration-option').querySelector('.option-title').textContent;
-                const price = document.querySelector('input[name="rental-duration"]:checked').closest('.duration-option').querySelector('.option-price').textContent;
-
-                // Here you would typically send this data to the server
-                // For now, just show an alert
-                alert(`Game rental request submitted!\n\nGame ID: ${gameId}\nDuration: ${durationText}\nPrice: ${price}`);
-
-                // Close modal after submission
-                closeGameModal();
             });
         });
     </script>
