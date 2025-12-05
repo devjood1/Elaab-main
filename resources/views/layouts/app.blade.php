@@ -276,7 +276,6 @@
                 <li><a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Home</a></li>
                 <li><a href="{{ route('games.index') }}"
                         class="{{ request()->routeIs('games.*') ? 'active' : '' }}">Games</a></li>
-                <li><a href="#" class="{{ request()->routeIs('about') ? 'active' : '' }}">About</a></li>
                 <li><a href="{{ route('contact') }}"
                         class="{{ request()->routeIs('contact') ? 'active' : '' }}">Contact</a></li>
             </ul>
